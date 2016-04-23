@@ -6,12 +6,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/plugin/metrics")
 public class MetricsApi {
 
 	@Autowired
 	private MetricsCollection metrics;
 	
-	@RequestMapping("/plugin/metrics/mappings/metrics")
+	@RequestMapping("mappings/metrics")
 	public ResponseEntity<MetricsCollection> getMetrics() {
 		return ResponseEntity.ok(metrics);
 	}

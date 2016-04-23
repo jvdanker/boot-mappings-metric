@@ -1,10 +1,21 @@
 package net.vdanker.boot;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 public class MetricsCollection {
 
+	@Autowired
+	private RequestMappingHandlerMapping handlerMapping;
+	
 	private Map<String, MethodMetric> metrics;
 	
 	public MetricsCollection() {
@@ -27,7 +38,30 @@ public class MetricsCollection {
 	}
 	
 	public Map<String, MethodMetric> getMetrics() {
-		return metrics;
+		Map<String, MethodMetric> result = new HashMap<>();
+		
+		Set<String> handlerMappingPatterns = getHandlerMappingPatterns();
+		handlerMappingPatterns.forEach(m -> {
+			MethodMetric methodMetric = this.metrics.get(m);
+			if (methodMetric == null) {
+				this.metrics.put(m, new MethodMetric());
+			}
+			
+			result.put(m, methodMetric);
+		});
+		
+		return result;
+	}
+	
+	private Set<String> getHandlerMappingPatterns() {
+		Map<RequestMappingInfo, HandlerMethod> handlerMethods = this.handlerMapping.getHandlerMethods();
+		
+		Set<String> result = new HashSet<>();
+		handlerMethods.forEach((k, v) -> {
+			result.addAll(k.getPatternsCondition().getPatterns());
+		});
+		
+		return result;
 	}
 
 	public class MethodMetric {
