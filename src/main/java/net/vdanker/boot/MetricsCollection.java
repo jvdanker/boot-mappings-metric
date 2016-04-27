@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -18,8 +19,11 @@ public class MetricsCollection {
 	
 	private Map<String, MethodMetric> metrics;
 	
+	private Map<String, MethodConfiguration> configuration;
+	
 	public MetricsCollection() {
 		this.metrics = new ConcurrentHashMap<>();
+		this.configuration = new ConcurrentHashMap<>();
 	}
 
 	public synchronized void put(String name, long duration) {
@@ -53,6 +57,26 @@ public class MetricsCollection {
 		return result;
 	}
 	
+	public Map<String, MethodConfiguration> getConfiguration() {
+		Map<String, MethodConfiguration> result = new HashMap<>();
+		
+		Set<String> handlerMappingPatterns = getHandlerMappingPatterns();
+		handlerMappingPatterns.forEach(m -> {
+			MethodConfiguration config = this.configuration.get(m);
+			if (config == null) {
+				this.configuration.put(m, new MethodConfiguration());
+			}
+			
+			result.put(m, config);
+		});
+		
+		return result;
+	}
+	
+	public synchronized void setConfiguration(String name, MethodConfiguration config) {
+		this.configuration.put(name, config);
+	}
+	
 	private Set<String> getHandlerMappingPatterns() {
 		Map<RequestMappingInfo, HandlerMethod> handlerMethods = this.handlerMapping.getHandlerMethods();
 		
@@ -71,5 +95,14 @@ public class MetricsCollection {
 		public long max;
 		public long sum;
 		public long last;
+	}
+	
+	public class MethodConfiguration {
+		public boolean enabled;
+		public HttpStatus response;
+		
+		public MethodConfiguration() {
+			this.enabled = true;
+		}
 	}
 }
