@@ -25,36 +25,33 @@ public class ConfigurationApi {
 	
 	@RequestMapping(value="mappings/config", method=RequestMethod.POST)
 	public ResponseEntity<?> setConfig(@RequestBody ConfigRequest request) {
+		MethodConfiguration config = metrics.getConfiguration().get(request.pattern);
+
 		if ("disable".equals(request.action)) {
-			MethodConfiguration config = metrics.getConfiguration().get(request.pattern);
+
 			config.enabled = false;
 			config.response = HttpStatus.SERVICE_UNAVAILABLE;
-			metrics.setConfiguration(request.pattern, config);
-
-			return ResponseEntity.ok().build();
+			
 		} else if ("enable".equals(request.action)) {
-			MethodConfiguration config = metrics.getConfiguration().get(request.pattern);
+			
 			config.enabled = true;
 			config.response = HttpStatus.OK;
-			metrics.setConfiguration(request.pattern, config);
-
-			return ResponseEntity.ok().build();
+			
+		} else {
+			
+			return ResponseEntity.badRequest().build();
 		}
 		
-		return ResponseEntity.badRequest().build();
+		metrics.setConfiguration(request.pattern, config);
+		return ResponseEntity.ok().build();
 	}
 	
 	public static class ConfigRequest {
 		private String pattern;
 		private String action;
-		public String getPattern() {
-			return pattern;
-		}
+		
 		public void setPattern(String pattern) {
 			this.pattern = pattern;
-		}
-		public String getAction() {
-			return action;
 		}
 		public void setAction(String action) {
 			this.action = action;
